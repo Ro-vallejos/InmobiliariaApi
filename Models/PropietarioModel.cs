@@ -1,4 +1,4 @@
-namespace _net_integrador.Models;
+namespace inmobiliariaApi.Models;
 using System.ComponentModel.DataAnnotations;
 
 
@@ -22,6 +22,7 @@ public class Propietario
    [RegularExpression(@"^(\d{8,12})?$", ErrorMessage = "El teléfono no es válido")]
     public string telefono { get; set; } = string.Empty; 
     public int estado { get; set; }
+    public string clave { get; set; } = string.Empty;
 public override string ToString()
 		{
 			//return $"{Apellido}, {Nombre}";
@@ -35,4 +36,3 @@ public override string ToString()
 public string? NombreCompleto => $"{nombre} {apellido}";
 
 }
-//id, nombre, apellido, dni(varchar),email, telegono, password, estado(int)

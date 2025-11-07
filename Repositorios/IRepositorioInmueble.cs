@@ -1,19 +1,14 @@
-using _net_integrador.Models;
+using inmobiliariaApi.Dtos;
 using System.Collections.Generic;
 
-namespace _net_integrador.Repositorios
+namespace inmobiliariaApi.Repositorios
 {
     public interface IRepositorioInmueble
     {
-        List<Inmueble> ObtenerInmuebles();
-        Inmueble? ObtenerInmuebleId(int id);
-        void AgregarInmueble(Inmueble inmuebleNuevo);
-        void ActualizarInmueble(Inmueble inmuebleEditado);
-        void SuspenderOferta(int id);
-        bool ActivarOferta(int id);
-        List<Inmueble> ObtenerInmueblesDisponibles();
-        List<Inmueble> ObtenerInmueblesPorPropietario(int propietarioId);
-        void MarcarComoAlquilado(int id);
-        List <Inmueble> BuscarDisponiblePorFecha(DateTime fechaDesde, DateTime fechaHasta);
+        InmuebleDto? ObtenerInmuebleId(int id);
+        void AgregarInmueble(InmuebleDto inmuebleNuevo);
+        List<InmuebleDto> ObtenerInmueblesPorPropietarioDto(int propietarioId);
+        void ActualizarEstado(int id, int activo);
+        List<InmuebleDto> ObtenerConContratoVigente(int propietarioId);
     }
 }

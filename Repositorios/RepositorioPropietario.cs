@@ -1,8 +1,8 @@
-using _net_integrador.Models;
+using inmobiliariaApi.Models;
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
 
-namespace _net_integrador.Repositorios
+namespace inmobiliariaApi.Repositorios
 {
     public class RepositorioPropietario : RepositorioBase, IRepositorioPropietario
     {
@@ -41,7 +41,7 @@ namespace _net_integrador.Repositorios
             Propietario propietario = new Propietario();
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
-                var sql = "SELECT id, nombre, apellido, dni, email, telefono, estado FROM propietario WHERE id = @id";
+                var sql = "SELECT id, nombre, apellido, dni, email, telefono, estado, clave FROM propietario WHERE id = @id";
                 using (MySqlCommand command = new MySqlCommand(sql, connection))
                 {
                     connection.Open();
@@ -56,6 +56,7 @@ namespace _net_integrador.Repositorios
                         propietario.email = reader.GetString("email");
                         propietario.telefono = reader.GetString("telefono");
                         propietario.estado = reader.GetInt32("estado");
+                        propietario.clave = reader.GetString("clave");
                     }
                     connection.Close();
                 }
@@ -134,7 +135,7 @@ namespace _net_integrador.Repositorios
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
-                var sql = "INSERT INTO propietario (nombre, apellido, dni, email, telefono, estado) VALUES (@nombre, @apellido, @dni, @email, @telefono, @estado)";
+                var sql = "INSERT INTO propietario (nombre, apellido, dni, email, telefono, estado, clave) VALUES (@nombre, @apellido, @dni, @email, @telefono, @estado, @clave)";
                 using (MySqlCommand command = new MySqlCommand(sql, connection))
                 {
                     connection.Open();
@@ -144,6 +145,7 @@ namespace _net_integrador.Repositorios
                     command.Parameters.AddWithValue("@email", propietario.email);
                     command.Parameters.AddWithValue("@telefono", propietario.telefono);
                     command.Parameters.AddWithValue("@estado", propietario.estado);
+                    command.Parameters.AddWithValue("@clave", propietario.clave);
                     command.ExecuteNonQuery();
                     connection.Close();
                 }
@@ -213,6 +215,50 @@ namespace _net_integrador.Repositorios
                     connection.Close();
                 }
                 return propietarios;
+            }
+        }
+
+        public Propietario ObtenerPorEmail(string email)
+        {
+            Propietario propietario = new Propietario();
+            var query = "SELECT id, email, dni, telefono, clave, estado, nombre, apellido FROM propietario WHERE email = @email;";
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    connection.Open();
+                    command.Parameters.AddWithValue("@email", email);
+                    var reader = command.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        propietario.id = reader.GetInt32("id");
+                        propietario.nombre = reader.GetString("nombre");
+                        propietario.apellido = reader.GetString("apellido");
+                        propietario.dni = reader.GetString("dni");
+                        propietario.email = reader.GetString("email");
+                        propietario.telefono = reader.GetString("telefono");
+                        propietario.estado = reader.GetInt32("estado");
+                        propietario.clave = reader.GetString("clave");
+                    }
+                    connection.Close();
+                }
+                return propietario;
+            }
+
+        }
+         public void ActualizarClave(int id, string nuevoHash)
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                var sql = "UPDATE propietario SET clave = @clave WHERE id = @id";
+                using (MySqlCommand command = new MySqlCommand(sql, connection))
+                {
+                    connection.Open();
+                    command.Parameters.AddWithValue("@id",id);
+                    command.Parameters.AddWithValue("@clave", nuevoHash);
+                    command.ExecuteNonQuery();
+                    connection.Close();
+                }
             }
         }
 

@@ -1,32 +1,16 @@
-using System;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
 
-namespace _net_integrador.Models
+namespace inmobiliariaApi.Dtos
 {
-    [Table("pago")]
-    public class Pago
+    public class PagoDto
     {
-        public int id { get; set; }
-        
-        [Display(Name = "Contrato")]
-        public int id_contrato { get; set; }
-        public Contrato Contrato { get; set; } = new Contrato();
-        
-        [Display(Name = "Nro. Pago")]
-        public int nro_pago { get; set; }
-        
-        [Display(Name = "Fecha de Pago")]
-        public DateTime? fecha_pago { get; set; }
-        
-        [Display(Name = "Estado")]
-        public EstadoPago estado { get; set; }
-        
-        [Display(Name = "Concepto")]
-        public string concepto { get; set; } = string.Empty;
+        public int idContrato { get; set; }
+        public int idPago { get; set; }
+        public int nroPago { get; set; }
+        public DateTime? fechaPago { get; set; }
+        public string estado { get; set; } = "pendiente";
+        public string concepto { get; set; } = "";
     }
-    
-    public enum EstadoPago
+     public enum EstadoPago
     {
         pendiente,
         recibido,

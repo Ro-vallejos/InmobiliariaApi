@@ -1,58 +1,36 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
-
-namespace _net_integrador.Models
+namespace inmobiliariaApi.Dtos
 {
-    [Table("inmueble")]
-    public class Inmueble
+
+    public class InmuebleDto
     {
+        [Required]
         public int id { get; set; }
-        public Propietario? propietario { get; set; }
-        [Required(ErrorMessage = "Este campo es obligatorio")]
-        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un propietario")]
+        [Required]
+        public bool disponible { get; set; }
+        public string? direccion { get; set; }
 
-        public int? id_propietario { get; set; }
-        [Required(ErrorMessage = "Este campo es obligatorio")]
+        public int idPropietario { get; set; }
+        public string? tipo { get; set; }
 
-        public string direccion { get; set; } = string.Empty;
+        public int estado { get; set; }
+        public string? uso { get; set; }
 
-
-        [Required(ErrorMessage = "Este campo es obligatorio")]
-
-        public UsoInmueble? uso { get; set; }
-        public TipoInmueble? tipoInmueble { get; set; }
-        [Required(ErrorMessage = "Este campo es obligatorio")]
-        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un tipo de inmueble")]
-        public int? id_tipo { get; set; }
-
-
-        [Required(ErrorMessage = "La cantidad de ambientes es obligatoria")]
-        [Range(1, 20, ErrorMessage = "La cantidad de ambientes debe ser entre 1 y 20")]
-
-        public int? ambientes { get; set; }
-        [Required(ErrorMessage = "Este campo es obligatorio")]
-
-        public string eje_x { get; set; } = string.Empty;
-        [Required(ErrorMessage = "Este campo es obligatorio")]
+        public int ambientes { get; set; }
+        public decimal superficie { get; set; }
+        public decimal latitud { get; set; }
+        public decimal longitud { get; set; }
+        public decimal precio { get; set; }
+        public string? imagen { get; set; }
+        public ContratoDto contrato { get; set; }       
 
 
-        public string eje_y { get; set; } = string.Empty;
-        [Required(ErrorMessage = "Este campo es obligatorio")]
-        public decimal? precio { get; set; }
-        public Estado estado { get; set; }
-
-
-    }
-    public enum UsoInmueble
-    {
-        Comercial = 1,
-        Residencial = 2
     }
     public enum Estado
-    {
-        Disponible= 1,
-        Suspendido= 2,
-        Alquilado= 3
-    }
+        {
+            Disponible= 1, 
+            Suspendido= 2,
+            Alquilado= 3
+        }
 }

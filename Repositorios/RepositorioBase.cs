@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 
 
-namespace _net_integrador.Repositorios
+namespace inmobiliariaApi.Repositorios
 {
     public abstract class RepositorioBase
     {

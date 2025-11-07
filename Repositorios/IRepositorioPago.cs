@@ -1,17 +1,11 @@
-using _net_integrador.Models;
+using inmobiliariaApi.Models;
 using System.Collections.Generic;
+using inmobiliariaApi.Dtos;
 
-namespace _net_integrador.Repositorios;
+namespace inmobiliariaApi.Repositorios;
 
 public interface IRepositorioPago
 {
-    List<Pago> ObtenerPagosPorContrato(int contratoId);
-    Pago? ObtenerPagoId(int id);
-    void AgregarPago(Pago pago);
-    void AnularPago(int id);
-    void ActualizarPago(Pago pago);
-
-    public DateTime? ObtenerFechaUltimoPagoRealizado(int contratoId);
-    public int ContarPagosRealizados(int contratoId);
+    List<PagoDto> ObtenerPagosPorContrato(int contratoId);
     
 }
