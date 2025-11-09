@@ -33,7 +33,9 @@ namespace inmobiliariaApi.Controllers
             var idProp = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             if (idProp <= 0) return Unauthorized("Token inválido.");
 
-            var pagos = _repoPago.ObtenerPagosPorContrato(id).ToList();
+            var pagos = _repoPago.ObtenerPagosPorContrato(id);
+            if (pagos == null)
+                return NotFound("No se encontraron pagos.");
             
             return Ok(pagos);
         }

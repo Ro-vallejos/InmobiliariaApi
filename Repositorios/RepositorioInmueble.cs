@@ -135,12 +135,11 @@ namespace inmobiliariaApi.Repositorios
              List<InmuebleDto> inmuebles = new List<InmuebleDto>();
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
-                var query = @"SELECT i.*, c.*
-                FROM contrato c
-                JOIN inmueble i ON i.id = c.id_inmueble
-                WHERE 
-                c.estado = 1
-                AND i.id_propietario = @idPropietario";
+                var query = @"SELECT DISTINCT i.*
+                FROM inmueble i
+                JOIN contrato c ON c.id_inmueble = i.id
+                WHERE c.estado = 1;
+                ";
 
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
@@ -165,10 +164,6 @@ namespace inmobiliariaApi.Repositorios
                             estado = estadoInt,
                             imagen = reader.GetString("imagen"),
                             tipo = reader.GetString("tipo"),
-                            contrato = new ContratoDto
-                            {
-                                idContrato = reader.GetInt32("id_contrato"),
-                            }
                         });
                     }
                     connection.Close();

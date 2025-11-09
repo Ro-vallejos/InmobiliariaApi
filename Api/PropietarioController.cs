@@ -10,6 +10,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using MimeKit;
+using MailKit.Net.Smtp;
 
 namespace inmobiliariaApi.Controllers
 {
@@ -134,40 +136,88 @@ namespace inmobiliariaApi.Controllers
             }
         }
         public record ChangePasswordForm(string currentPassword, string newPassword);
-    [HttpPut("changePassword")]
-    [Consumes("application/x-www-form-urlencoded")]
-    public IActionResult ChangePassword([FromForm] ChangePasswordForm form)
-    {
-        if (string.IsNullOrWhiteSpace(form.currentPassword) || string.IsNullOrWhiteSpace(form.newPassword))
-         return BadRequest("Debe ingresar la contraseña actual y la nueva contraseña.");
-            
-       if (form.newPassword.Trim() == form.currentPassword.Trim())
-         return BadRequest("La nueva contraseña no puede ser igual a la actual.");
+        [HttpPut("changePassword")]
+        [Consumes("application/x-www-form-urlencoded")]
+        public IActionResult ChangePassword([FromForm] ChangePasswordForm form)
+        {
+            if (string.IsNullOrWhiteSpace(form.currentPassword) || string.IsNullOrWhiteSpace(form.newPassword))
+                return BadRequest("Debe ingresar la contraseña actual y la nueva contraseña.");
 
-        int id = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        if (id <= 0) return Unauthorized("Token inválido o expirado.");
+            if (form.newPassword.Trim() == form.currentPassword.Trim())
+                return BadRequest("La nueva contraseña no puede ser igual a la actual.");
 
-        var p = _repo.ObtenerPropietarioId(id);
-        if (p is null) return NotFound("Propietario no encontrado.");
+            int id = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            if (id <= 0) return Unauthorized("Token inválido o expirado.");
 
-        var salt = _config["Salt"] ?? "";
-        string Hash(string plain) => Convert.ToBase64String(KeyDerivation.Pbkdf2(
-            password: plain,
-            salt: Encoding.ASCII.GetBytes(salt),
-            prf: KeyDerivationPrf.HMACSHA1,
-            iterationCount: 1000,
-            numBytesRequested: 256 / 8
-        ));
+            var p = _repo.ObtenerPropietarioId(id);
+            if (p is null) return NotFound("Propietario no encontrado.");
 
-        var actualHash = Hash(form.currentPassword.Trim());
-        if (!string.Equals(p.clave, actualHash, StringComparison.Ordinal))
-            return Unauthorized("La contraseña actual es incorrecta.");
+            var salt = _config["Salt"] ?? "";
+            string Hash(string plain) => Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                password: plain,
+                salt: Encoding.ASCII.GetBytes(salt),
+                prf: KeyDerivationPrf.HMACSHA1,
+                iterationCount: 1000,
+                numBytesRequested: 256 / 8
+            ));
 
-        var nuevoHash = Hash(form.newPassword.Trim());
-        _repo.ActualizarClave(id, nuevoHash);
+            var actualHash = Hash(form.currentPassword.Trim());
+            if (!string.Equals(p.clave, actualHash, StringComparison.Ordinal))
+                return Unauthorized("La contraseña actual es incorrecta.");
 
-        return NoContent();
-    }
+            var nuevoHash = Hash(form.newPassword.Trim());
+            _repo.ActualizarClave(id, nuevoHash);
+
+            return NoContent();
+        }
+        [HttpPost("email")]
+        [AllowAnonymous]
+        public IActionResult EnviarEmailRecuperacion([FromForm] string email)
+        {
+            try
+            {
+                var propietario = _repo.ObtenerPorEmail(email);
+                if (propietario == null)
+                    return NotFound("No existe propietario con ese email.");
+
+                var otp = new Random().Next(100000, 999999).ToString();
+                var salt = _config["Salt"] ?? "";
+
+                string hashOtp = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                    password: otp,
+                    salt: Encoding.ASCII.GetBytes(salt),
+                    prf: KeyDerivationPrf.HMACSHA1,
+                    iterationCount: 1000,
+                    numBytesRequested: 256 / 8
+                ));
+
+                _repo.GuardarPassRestore(propietario.id, hashOtp);
+
+                var msg = new MimeKit.MimeMessage();
+                msg.To.Add(new MailboxAddress($"{propietario.nombre}", propietario.email));
+                msg.From.Add(new MailboxAddress("Soporte Inmobiliaria", _config["SMTPUser"]));
+                msg.Subject = "Restablecer contraseña";
+                msg.Body = new TextPart("html")
+                {
+                    Text = $"Hola {propietario.nombre}, tu código de recuperación es: {otp}"
+                };
+
+                using (var smtp = new SmtpClient())
+                {
+                    smtp.Connect("smtp.gmail.com", 465, true);
+                    smtp.Authenticate(_config["SMTPUser"], _config["SMTPPass"]);
+                    smtp.Send(msg);
+                    smtp.Disconnect(true);
+                }
+
+                return Ok("Se envió un correo con instrucciones para restablecer la contraseña.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
 
     }
 }

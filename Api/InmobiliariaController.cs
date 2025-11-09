@@ -84,25 +84,25 @@ namespace inmobiliariaApi.Controllers
             }
         }
         [HttpPut("actualizar")]
-        public IActionResult Actualizar([FromBody] InmuebleDto dto)
+        public IActionResult Actualizar([FromBody] InmuebleDto inmueble)
         {
             try
             {
                 int idPropietario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
                 if (idPropietario <= 0) return Unauthorized("Token inválido o expirado.");
 
-                if (dto == null || dto.id <= 0)
+                if (inmueble == null || inmueble.id <= 0)
                     return BadRequest("Faltan datos del inmueble.");
 
 
-                var actual = _repoInmueble.ObtenerInmuebleId(dto.id);
+                var actual = _repoInmueble.ObtenerInmuebleId(inmueble.id);
                 if (actual == null)
                     return NotFound("Inmueble no encontrado.");
 
-                if (dto.disponible)
-                    _repoInmueble.ActualizarEstado(dto.id, 1);
+                if (inmueble.disponible)
+                    _repoInmueble.ActualizarEstado(inmueble.id, 1);
                 else
-                    _repoInmueble.ActualizarEstado(dto.id, 2);
+                    _repoInmueble.ActualizarEstado(inmueble.id, 2);
 
                 return Ok(actual);
             }

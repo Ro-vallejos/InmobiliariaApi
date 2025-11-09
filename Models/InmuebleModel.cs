@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace inmobiliariaApi.Dtos
 {
@@ -6,6 +7,7 @@ namespace inmobiliariaApi.Dtos
     public class InmuebleDto
     {
         [Required]
+        [JsonPropertyName("id")]
         public int id { get; set; }
         [Required]
         public bool disponible { get; set; }
@@ -23,7 +25,6 @@ namespace inmobiliariaApi.Dtos
         public decimal longitud { get; set; }
         public decimal precio { get; set; }
         public string? imagen { get; set; }
-        public ContratoDto contrato { get; set; }       
 
 
     }

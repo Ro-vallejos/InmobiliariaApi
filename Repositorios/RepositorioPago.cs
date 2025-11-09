@@ -19,6 +19,7 @@ public class RepositorioPago : RepositorioBase, IRepositorioPago
             SELECT  *
             FROM pago p
             WHERE p.id_contrato = @idContrato
+            AND p.estado = 'recibido'
             ORDER BY p.nro_pago ASC";
             using (MySqlCommand command = new MySqlCommand(sql, connection))
             {
@@ -32,6 +33,7 @@ public class RepositorioPago : RepositorioBase, IRepositorioPago
                 int idxFechaPago = reader.GetOrdinal("fecha_pago");
                 int idxEstado = reader.GetOrdinal("estado");
                 int idxConcepto = reader.GetOrdinal("concepto");
+                int idxImporte = reader.GetOrdinal("importe");
 
                 while (reader.Read())
                 {
@@ -48,6 +50,7 @@ public class RepositorioPago : RepositorioBase, IRepositorioPago
                         idContrato = reader.GetInt32(idxIdContrato),
                         nroPago = reader.GetInt32(idxNroPago),
                         fechaPago = fechaPago,
+                        importe = reader.GetDecimal(idxImporte),
                         estado = reader.GetString(idxEstado) switch
                         {
                             "pendiente" => EstadoPago.pendiente.ToString(),
@@ -61,6 +64,8 @@ public class RepositorioPago : RepositorioBase, IRepositorioPago
                 connection.Close();
             }
         }
+        if (pagos.Count == 0)
+             return null; 
         return pagos;
     }
 

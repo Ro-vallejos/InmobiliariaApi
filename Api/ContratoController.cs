@@ -27,26 +27,6 @@ namespace inmobiliariaApi.Controllers
             _repoInmueble = repoInmueble;
         }
 
-        [HttpGet("{contratoId:int}/Inquilino")]
-        public IActionResult ObtenerInquilino(int contratoId)
-        {
-            try
-            {
-                int idPropietario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-                if (idPropietario <= 0)
-                    return Unauthorized("Token inválido o expirado.");
-
-                var inquilino = _repoContrato.ObtenerInquilinoDeContrato(contratoId, idPropietario);
-                if (inquilino == null)
-                    return NotFound("No se encontró un inquilino para este contrato.");
-
-                return Ok(inquilino);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
         [HttpGet("inmueble/{id:int}")]
         public IActionResult ObtenerPorInmueble(int id)
         {

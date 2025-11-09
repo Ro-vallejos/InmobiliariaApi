@@ -85,110 +85,7 @@ namespace inmobiliariaApi.Repositorios
             return propietario;
         }
 
-        public bool EliminarPropietario(int id)
-        {
-            using (MySqlConnection connection = new MySqlConnection(connectionString))
-            {
-                connection.Open();
-                var checkQuery = "SELECT COUNT(*) FROM contrato c INNER JOIN  inmueble i ON c.id_inmueble = i.id WHERE i.id_propietario = @idPropietario AND c.estado = 1";
-                using (MySqlCommand checkCommand = new MySqlCommand(checkQuery, connection))
-                {
-                    checkCommand.Parameters.AddWithValue("@idPropietario", id);
-                    int contratosActivos = Convert.ToInt32(checkCommand.ExecuteScalar());
-
-                    if (contratosActivos > 0)
-                    {
-                        return false;
-                    }
-                }
-                var updateQuery = "UPDATE propietario SET estado = 0 WHERE id = @id";
-                using (MySqlCommand updateCommand = new MySqlCommand(updateQuery, connection))
-                {
-                    updateCommand.Parameters.AddWithValue("@id", id);
-                    updateCommand.ExecuteNonQuery();
-                }
-                var updateQueryInmueble = "UPDATE inmueble SET estado = 'Suspendido' WHERE id_propietario = @idPropietario";
-                using (MySqlCommand updateCommand = new MySqlCommand(updateQueryInmueble, connection))
-                {
-                    updateCommand.Parameters.AddWithValue("@idPropietario", id);
-                    updateCommand.ExecuteNonQuery();
-                }
-                connection.Close();
-            }
-            return true;
-        }
-        public void ActivarPropietario(int id)
-        {
-            using (MySqlConnection connection = new MySqlConnection(connectionString))
-            {
-                var query = "UPDATE propietario SET estado = 1 WHERE id = @id";
-                using (var command = new MySqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@id", id);
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
-            }
-        }
-
-        public void AgregarPropietario(Propietario propietario)
-        {
-            using (MySqlConnection connection = new MySqlConnection(connectionString))
-            {
-                var sql = "INSERT INTO propietario (nombre, apellido, dni, email, telefono, estado, clave) VALUES (@nombre, @apellido, @dni, @email, @telefono, @estado, @clave)";
-                using (MySqlCommand command = new MySqlCommand(sql, connection))
-                {
-                    connection.Open();
-                    command.Parameters.AddWithValue("@nombre", propietario.nombre);
-                    command.Parameters.AddWithValue("@apellido", propietario.apellido);
-                    command.Parameters.AddWithValue("@dni", propietario.dni);
-                    command.Parameters.AddWithValue("@email", propietario.email);
-                    command.Parameters.AddWithValue("@telefono", propietario.telefono);
-                    command.Parameters.AddWithValue("@estado", propietario.estado);
-                    command.Parameters.AddWithValue("@clave", propietario.clave);
-                    command.ExecuteNonQuery();
-                    connection.Close();
-                }
-            }
-        }
-
-        public bool ExisteDni(string dni, int? idExcluido = null)
-        {
-            using (MySqlConnection connection = new MySqlConnection(connectionString))
-            {
-                string sql = "SELECT COUNT(*) FROM propietario WHERE dni = @dni ";
-                if (idExcluido.HasValue)
-                    sql += " AND id != @id";
-                using (var cmd = new MySqlCommand(sql, connection))
-                {
-                    connection.Open();
-                    cmd.Parameters.AddWithValue("@dni", dni);
-                    if (idExcluido.HasValue)
-                        cmd.Parameters.AddWithValue("@id", idExcluido.Value);
-                    int count = Convert.ToInt32(cmd.ExecuteScalar());
-                    return count > 0;
-                }
-            }
-        }
-
-        public bool ExisteEmail(string email, int? idExcluido = null)
-        {
-            using (MySqlConnection connection = new MySqlConnection(connectionString))
-            {
-                string sql = "SELECT COUNT(*) FROM propietario WHERE email = @email ";
-                if (idExcluido.HasValue)
-                    sql += " AND id != @id";
-                using (var cmd = new MySqlCommand(sql, connection))
-                {
-                    connection.Open();
-                    cmd.Parameters.AddWithValue("@email", email);
-                    if (idExcluido.HasValue)
-                        cmd.Parameters.AddWithValue("@id", idExcluido.Value);
-                    int count = Convert.ToInt32(cmd.ExecuteScalar());
-                    return count > 0;
-                }
-            }
-        }
+       
 
         public List<Propietario> ObtenerPropietariosActivos()
         {
@@ -246,7 +143,7 @@ namespace inmobiliariaApi.Repositorios
             }
 
         }
-         public void ActualizarClave(int id, string nuevoHash)
+        public void ActualizarClave(int id, string nuevoHash)
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
@@ -254,14 +151,26 @@ namespace inmobiliariaApi.Repositorios
                 using (MySqlCommand command = new MySqlCommand(sql, connection))
                 {
                     connection.Open();
-                    command.Parameters.AddWithValue("@id",id);
+                    command.Parameters.AddWithValue("@id", id);
                     command.Parameters.AddWithValue("@clave", nuevoHash);
                     command.ExecuteNonQuery();
                     connection.Close();
                 }
             }
         }
-
-
+        public void GuardarPassRestore(int id, string hashOtp)
+        {
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var sql = "UPDATE propietario SET pass_restore = @otp WHERE id = @id";
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@otp", hashOtp);
+                    command.Parameters.AddWithValue("@id", id);
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            } 
+        }
     }
 }
