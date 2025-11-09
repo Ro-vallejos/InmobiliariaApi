@@ -36,6 +36,10 @@ namespace inmobiliariaApi.Controllers
                 if (idPropietario <= 0)
                     return Unauthorized("Token inválido o expirado");
                 var lista = _repoInmueble.ObtenerInmueblesPorPropietarioDto(idPropietario);
+                if (!lista.Any())
+                {
+                    return NotFound("No se encontraron inmuebles.");
+                }
                 return Ok(lista);
             }
             catch (Exception ex)
@@ -98,11 +102,8 @@ namespace inmobiliariaApi.Controllers
                 var actual = _repoInmueble.ObtenerInmuebleId(inmueble.id);
                 if (actual == null)
                     return NotFound("Inmueble no encontrado.");
-
-                if (inmueble.disponible)
-                    _repoInmueble.ActualizarEstado(inmueble.id, 1);
-                else
-                    _repoInmueble.ActualizarEstado(inmueble.id, 2);
+            
+                    _repoInmueble.ActualizarEstado(inmueble.id, inmueble.estado);
 
                 return Ok(actual);
             }
@@ -122,7 +123,7 @@ namespace inmobiliariaApi.Controllers
                     return Unauthorized("Token inválido o expirado");
 
                 var lista = _repoInmueble.ObtenerConContratoVigente(idPropietario);
-                if(lista == null)
+                if(!lista.Any())
                     return NotFound("No hay inmuebles con contrato vigente.");
                 return Ok(lista);
             }

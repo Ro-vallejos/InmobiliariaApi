@@ -35,8 +35,6 @@ namespace inmobiliariaApi.Repositorios
                             uso = reader.GetString("uso"),
                             tipo = reader.GetString("tipo"),
                             ambientes = reader.GetInt32("ambientes"),
-                            longitud = reader.GetDecimal("longitud"),
-                            latitud = reader.GetDecimal("latitud"),
                             precio = reader.GetDecimal("precio"),
                             estado = estadoInt,
                             imagen = reader.GetString("imagen")
@@ -54,7 +52,7 @@ namespace inmobiliariaApi.Repositorios
             {
                 using (MySqlConnection connection = new MySqlConnection(connectionString))
                 {
-                    var sql = "INSERT INTO inmueble (id_propietario, direccion, uso, tipo, ambientes, longitud, latitud, precio, imagen) VALUES (@id_propietario, @direccion, @uso, @tipo, @ambientes, @longitud, @latitud, @precio, @imagen)";
+                    var sql = "INSERT INTO inmueble (id_propietario, direccion, uso, tipo, ambientes, precio, imagen, estado) VALUES (@id_propietario, @direccion, @uso, @tipo, @ambientes, @precio, @imagen, 2)";
                     using (MySqlCommand command = new MySqlCommand(sql, connection))
                     {
                         connection.Open();
@@ -63,8 +61,6 @@ namespace inmobiliariaApi.Repositorios
                         command.Parameters.AddWithValue("@uso", inmuebleNuevo.uso.ToString());
                         command.Parameters.AddWithValue("@tipo", inmuebleNuevo.tipo);
                         command.Parameters.AddWithValue("@ambientes", inmuebleNuevo.ambientes);
-                        command.Parameters.AddWithValue("@longitud", inmuebleNuevo.longitud);
-                        command.Parameters.AddWithValue("@latitud", inmuebleNuevo.latitud);
                         command.Parameters.AddWithValue("@precio", inmuebleNuevo.precio);
                         command.Parameters.AddWithValue("@imagen", inmuebleNuevo.imagen);
                         command.ExecuteNonQuery();
@@ -116,8 +112,6 @@ namespace inmobiliariaApi.Repositorios
                             direccion = reader.GetString("direccion"),
                             uso = reader.GetString("uso"),
                             ambientes = reader.GetInt32("ambientes"),
-                            longitud = reader.GetDecimal("longitud"),
-                            latitud = reader.GetDecimal("latitud"),
                             precio = reader.GetDecimal("precio"),
                             estado = estadoInt,
                             imagen = reader.GetString("imagen"),
@@ -127,7 +121,7 @@ namespace inmobiliariaApi.Repositorios
                     connection.Close();
                 }
             }
-            return inmuebles;
+             return inmuebles.Count == 0 ? null : inmuebles;
         }
         
         public List<InmuebleDto> ObtenerConContratoVigente(int propietarioId)
@@ -138,7 +132,7 @@ namespace inmobiliariaApi.Repositorios
                 var query = @"SELECT DISTINCT i.*
                 FROM inmueble i
                 JOIN contrato c ON c.id_inmueble = i.id
-                WHERE c.estado = 1;
+                WHERE c.estado = 1 AND i.id_propietario = @propietarioId;
                 ";
 
                 using (MySqlCommand command = new MySqlCommand(query, connection))
@@ -158,8 +152,6 @@ namespace inmobiliariaApi.Repositorios
                             direccion = reader.GetString("direccion"),
                             uso = reader.GetString("uso"),
                             ambientes = reader.GetInt32("ambientes"),
-                            longitud = reader.GetDecimal("longitud"),
-                            latitud = reader.GetDecimal("latitud"),
                             precio = reader.GetDecimal("precio"),
                             estado = estadoInt,
                             imagen = reader.GetString("imagen"),
@@ -169,7 +161,7 @@ namespace inmobiliariaApi.Repositorios
                     connection.Close();
                 }
             }
-            return inmuebles;
+             return inmuebles.Count == 0 ? null : inmuebles;
         }
 
 
