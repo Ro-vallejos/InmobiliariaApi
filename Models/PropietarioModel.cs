@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 public class Propietario
 {
+    [Key]
     public int id { get; set; }
     [Required(ErrorMessage = "Ingrese un Nombre")]
     [RegularExpression(@"^[\p{L}]+$", ErrorMessage = "El nombre no puede contener números ni caracteres especiales")]

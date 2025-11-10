@@ -1,11 +1,12 @@
 
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace inmobiliariaApi.Dtos
-{
-    public class InquilinoDto
+
+    public class Inquilino
     {
         [JsonPropertyName("idContrato")]
+        [Key]
         public int idInquilino { get; set; }
         public string? nombre { get; set; }
         public string? apellido { get; set; }
@@ -14,4 +15,3 @@ namespace inmobiliariaApi.Dtos
         public string? telefono { get; set; }
 
     }
-}

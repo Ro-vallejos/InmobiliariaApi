@@ -2,7 +2,6 @@ using inmobiliariaApi.Models;
 using MySql.Data.MySqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
-using inmobiliariaApi.Dtos;
 
 namespace inmobiliariaApi.Repositorios
 {
@@ -10,9 +9,9 @@ namespace inmobiliariaApi.Repositorios
     {
 
         public RepositorioInmueble(IConfiguration configuration) : base(configuration) { }
-        public InmuebleDto? ObtenerInmuebleId(int id)
+        public Inmueble? ObtenerInmuebleId(int id)
         {
-            InmuebleDto? inmueble = null;
+            Inmueble? inmueble = null;
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 var sql = "SELECT id, id_propietario, direccion, uso, tipo, ambientes, longitud, latitud, precio, estado, imagen FROM inmueble WHERE id = @id";
@@ -27,7 +26,7 @@ namespace inmobiliariaApi.Repositorios
                         Estado estadoEnum = (Estado)Enum.Parse(typeof(Estado), estadoString, true);
                        int estadoInt = (int)estadoEnum;
 
-                        inmueble = new InmuebleDto
+                        inmueble = new Inmueble
                         {
                             id = reader.GetInt32("id"),
                             idPropietario = reader.GetInt32("id_propietario"),
@@ -46,7 +45,7 @@ namespace inmobiliariaApi.Repositorios
             return inmueble;
         }
 
-        public void AgregarInmueble(InmuebleDto inmuebleNuevo)
+        public void AgregarInmueble(Inmueble inmuebleNuevo)
         {
             try
             {
@@ -89,9 +88,9 @@ namespace inmobiliariaApi.Repositorios
             }
 
         }
-        public List<InmuebleDto> ObtenerInmueblesPorPropietarioDto(int propietarioId)
+        public List<Inmueble> ObtenerInmueblesPorPropietarioDto(int propietarioId)
         {
-            List<InmuebleDto> inmuebles = new List<InmuebleDto>();
+            List<Inmueble> inmuebles = new List<Inmueble>();
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 var query = "SELECT id, id_propietario, direccion, uso, tipo, ambientes, longitud,latitud,precio,estado,imagen, tipo FROM inmueble WHERE id_propietario = @propietarioId";
@@ -105,7 +104,7 @@ namespace inmobiliariaApi.Repositorios
                         string estadoString = reader.GetString("estado");
                         Estado estadoEnum = (Estado)Enum.Parse(typeof(Estado), estadoString, true);
                         int estadoInt = (int)estadoEnum;
-                        inmuebles.Add(new InmuebleDto
+                        inmuebles.Add(new Inmueble
                         {
                             id = reader.GetInt32("id"),
                             idPropietario = reader.GetInt32("id_propietario"),
@@ -124,9 +123,9 @@ namespace inmobiliariaApi.Repositorios
              return inmuebles.Count == 0 ? null : inmuebles;
         }
         
-        public List<InmuebleDto> ObtenerConContratoVigente(int propietarioId)
+        public List<Inmueble> ObtenerConContratoVigente(int propietarioId)
         {
-             List<InmuebleDto> inmuebles = new List<InmuebleDto>();
+             List<Inmueble> inmuebles = new List<Inmueble>();
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 var query = @"SELECT DISTINCT i.*
@@ -145,7 +144,7 @@ namespace inmobiliariaApi.Repositorios
                         string estadoString = reader.GetString("estado");
                         Estado estadoEnum = (Estado)Enum.Parse(typeof(Estado), estadoString, true);
                         int estadoInt = (int)estadoEnum;
-                        inmuebles.Add(new InmuebleDto
+                        inmuebles.Add(new Inmueble
                         {
                             id = reader.GetInt32("id"),
                             idPropietario = reader.GetInt32("id_propietario"),

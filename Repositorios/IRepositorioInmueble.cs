@@ -1,14 +1,13 @@
-using inmobiliariaApi.Dtos;
 using System.Collections.Generic;
 
 namespace inmobiliariaApi.Repositorios
 {
     public interface IRepositorioInmueble
     {
-        InmuebleDto? ObtenerInmuebleId(int id);
-        void AgregarInmueble(InmuebleDto inmuebleNuevo);
-        List<InmuebleDto> ObtenerInmueblesPorPropietarioDto(int propietarioId);
+        Inmueble? ObtenerInmuebleId(int id);
+        void AgregarInmueble(Inmueble inmuebleNuevo);
+        List<Inmueble> ObtenerInmueblesPorPropietarioDto(int propietarioId);
         void ActualizarEstado(int id, int activo);
-        List<InmuebleDto> ObtenerConContratoVigente(int propietarioId);
+        List<Inmueble> ObtenerConContratoVigente(int propietarioId);
     }
 }

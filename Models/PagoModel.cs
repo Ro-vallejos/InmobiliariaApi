@@ -1,19 +1,19 @@
 
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using inmobiliariaApi.Helpers;
 
-
-namespace inmobiliariaApi.Dtos
-{
-    public class PagoDto
+    public class Pago
     {
-        public int idContrato { get; set; }
+        [Key]
         [JsonPropertyName("id")]
         public int idPago { get; set; }
+        public int idContrato { get; set; }
         public int nroPago { get; set; }
         [JsonConverter(typeof(JsonDateOnlyConverter))]
         public DateTime? fechaPago { get; set; }
-        public string estado { get; set; } = "pendiente";
+       // public string estado { get; set; } = "pendiente";
+       public EstadoPago estado { get; set; }
         public string concepto { get; set; } = "";
         public decimal importe { get; set; }
     }
@@ -23,4 +23,3 @@ namespace inmobiliariaApi.Dtos
         recibido,
         anulado
     }
-}

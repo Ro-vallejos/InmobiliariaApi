@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using inmobiliariaApi.Repositorios;
 using System.Security.Claims;
 using inmobiliariaApi.Models;
-using inmobiliariaApi.Dtos;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace inmobiliariaApi.Controllers
@@ -17,25 +17,29 @@ namespace inmobiliariaApi.Controllers
         private readonly IRepositorioInmueble _repoInmueble;
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
+        private readonly DataContext context;
 
-        public InmobiliariaController(IRepositorioInmueble repoInmueble, IConfiguration config, IWebHostEnvironment environment)
+        public InmobiliariaController(IRepositorioInmueble repoInmueble, IConfiguration config, IWebHostEnvironment environment, DataContext context)
         {
             _repoInmueble = repoInmueble;
             _config = config;
             _environment = environment;
+            this.context = context;
         }
 
 
 
         [HttpGet]
-        public IActionResult obtenerInmuebles()
+        public async Task< IActionResult> obtenerInmuebles()
         {
             try
             {
                 int idPropietario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
                 if (idPropietario <= 0)
                     return Unauthorized("Token inválido o expirado");
-                var lista = _repoInmueble.ObtenerInmueblesPorPropietarioDto(idPropietario);
+               // var lista = _repoInmueble.ObtenerInmueblesPorPropietarioDto(idPropietario);
+            var lista = await context.inmueble.AsNoTracking().Where(i => i.idPropietario == idPropietario).ToListAsync();
+
                 if (!lista.Any())
                 {
                     return NotFound("No se encontraron inmuebles.");
@@ -50,7 +54,7 @@ namespace inmobiliariaApi.Controllers
 
         [HttpPost("cargar")]
         [Consumes("Multipart/form-data")]
-        public IActionResult Agregar([FromForm] IFormFile imagen, [FromForm] string inmueble)
+        public async Task<IActionResult> Agregar([FromForm] IFormFile imagen, [FromForm] string inmueble)
         {
             try
             {
@@ -61,7 +65,7 @@ namespace inmobiliariaApi.Controllers
                 if (imagen == null || string.IsNullOrEmpty(inmueble))
                     return BadRequest("Debe enviar la imagen y los datos del inmueble.");
 
-                var inmuebleNuevo = System.Text.Json.JsonSerializer.Deserialize<InmuebleDto>(inmueble);
+                var inmuebleNuevo = System.Text.Json.JsonSerializer.Deserialize<Inmueble>(inmueble);
                 if (inmuebleNuevo == null)
                     return BadRequest("Datos del inmueble inválidos.");
                 string nombreArchivo = Guid.NewGuid().ToString() + Path.GetExtension(imagen.FileName);
@@ -79,7 +83,9 @@ namespace inmobiliariaApi.Controllers
                 inmuebleNuevo.imagen = Path.Combine("/Uploads/Inmuebles/", nombreArchivo).Replace("\\", "/");
                 inmuebleNuevo.idPropietario = idPropietario;
 
-                _repoInmueble.AgregarInmueble(inmuebleNuevo);
+                //_repoInmueble.AgregarInmueble(inmuebleNuevo);
+                 context.inmueble.Add(inmuebleNuevo);
+                await context.SaveChangesAsync();
                 return Ok(inmuebleNuevo);
             }
             catch (Exception ex)
@@ -88,7 +94,7 @@ namespace inmobiliariaApi.Controllers
             }
         }
         [HttpPut("actualizar")]
-        public IActionResult Actualizar([FromBody] InmuebleDto inmueble)
+        public async Task<IActionResult> Actualizar([FromBody] Inmueble inmueble)
         {
             try
             {
@@ -98,12 +104,13 @@ namespace inmobiliariaApi.Controllers
                 if (inmueble == null || inmueble.id <= 0)
                     return BadRequest("Faltan datos del inmueble.");
 
+                var actual = await context.inmueble.FirstOrDefaultAsync(i => i.id == inmueble.id);
 
-                var actual = _repoInmueble.ObtenerInmuebleId(inmueble.id);
                 if (actual == null)
                     return NotFound("Inmueble no encontrado.");
-            
-                    _repoInmueble.ActualizarEstado(inmueble.id, inmueble.estado);
+                // _repoInmueble.ActualizarEstado(inmueble.id, inmueble.estado);
+                actual.estado = inmueble.estado;
+                await context.SaveChangesAsync();
 
                 return Ok(actual);
             }
@@ -114,7 +121,7 @@ namespace inmobiliariaApi.Controllers
         }
 
         [HttpGet("GetContratoVigente")]
-        public ActionResult<IEnumerable<InmuebleDto>> GetContratoVigente()
+        public async Task<ActionResult<List<Inmueble>>> GetContratoVigente()
         {
             try
             {
@@ -122,7 +129,15 @@ namespace inmobiliariaApi.Controllers
                 if (idPropietario <= 0)
                     return Unauthorized("Token inválido o expirado");
 
-                var lista = _repoInmueble.ObtenerConContratoVigente(idPropietario);
+                //var lista = _repoInmueble.ObtenerConContratoVigente(idPropietario);
+               var lista = await context.inmueble.AsNoTracking().Join(context.contrato,
+                i => i.id,
+                c => c.idInmueble,
+                (i, c) => new { i, c })
+                    .Where(x => x.c.estado == 1 && x.i.idPropietario == idPropietario)
+                    .Select(x => x.i)
+                    .Distinct()
+                    .ToListAsync();
                 if(!lista.Any())
                     return NotFound("No hay inmuebles con contrato vigente.");
                 return Ok(lista);

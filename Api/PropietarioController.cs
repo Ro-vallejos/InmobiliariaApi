@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using MimeKit;
 using MailKit.Net.Smtp;
+using Microsoft.EntityFrameworkCore;
 
 namespace inmobiliariaApi.Controllers
 {
@@ -22,11 +23,12 @@ namespace inmobiliariaApi.Controllers
     {
         private readonly IRepositorioPropietario _repo;
         private readonly IConfiguration _config;
-
-        public PropietariosController(IRepositorioPropietario repo, IConfiguration config)
+        private readonly DataContext _context;
+        public PropietariosController(IRepositorioPropietario repo, IConfiguration config, DataContext context)
         {
             _config = config;
             _repo = repo;
+            _context = context;
         }
 
         [HttpPost("login")]
@@ -42,7 +44,8 @@ namespace inmobiliariaApi.Controllers
                     iterationCount: 1000,
                     numBytesRequested: 256 / 8));
 
-                var p = _repo.ObtenerPorEmail(loginView.Usuario);
+               // var p = _repo.ObtenerPorEmail(loginView.Usuario);
+               var p = await _context.propietario.AsNoTracking().FirstOrDefaultAsync(p => p.email == loginView.Usuario); 
                 if (p == null || p.clave != hashed)
                 {
                     return BadRequest("Nombre de usuario o clave incorrecta");
@@ -74,7 +77,7 @@ namespace inmobiliariaApi.Controllers
         }
 
         [HttpGet]
-        public IActionResult ObtenerPerfil()
+        public async Task<IActionResult> ObtenerPerfil()
         {
             try
             {
@@ -83,7 +86,8 @@ namespace inmobiliariaApi.Controllers
                if (idToken <= 0) 
                     return Unauthorized("Token inválido o expirado");
 
-                var propietario = _repo.ObtenerPropietarioId(idToken);
+                //var propietario = _repo.ObtenerPropietarioId(idToken);
+               var propietario = await _context.propietario.AsNoTracking().FirstOrDefaultAsync(p => p.id == idToken); 
 
                 if (propietario == null)
                     return NotFound("Propietario no encontrado");
@@ -97,7 +101,7 @@ namespace inmobiliariaApi.Controllers
             }
         }
         [HttpPut("actualizar")]
-        public IActionResult Actualizar([FromBody] Propietario p)
+        public async Task <IActionResult> Actualizar([FromBody] Propietario p)
         {
             try
             {
@@ -105,7 +109,9 @@ namespace inmobiliariaApi.Controllers
                 if (idToken <= 0)
                     return Unauthorized("Token inválido o expirado.");
 
-                var actual = _repo.ObtenerPropietarioId(idToken);
+               // var actual = _repo.ObtenerPropietarioId(idToken);
+               var actual = await _context.propietario.FirstOrDefaultAsync(p => p.id == idToken); 
+
                 if (actual == null)
                     return NotFound("Propietario no encontrado.");
 
@@ -124,9 +130,15 @@ namespace inmobiliariaApi.Controllers
                 if (!string.IsNullOrWhiteSpace(p.email))
                     actual.email = p.email.Trim().ToLower();
 
+                var emailExiste = await _context.propietario.AnyAsync(x => x.email == p.email && x.id != idToken);
 
-                _repo.ActualizarPropietario(actual);
-                actual.clave = null;
+                if (emailExiste)
+                    return BadRequest("Ese email ya está en uso por otro propietario.");
+
+              
+                await _context.SaveChangesAsync();
+               // _repo.ActualizarPropietario(actual);
+               
 
                 return Ok(actual);
             }
@@ -138,7 +150,7 @@ namespace inmobiliariaApi.Controllers
         public record ChangePasswordForm(string currentPassword, string newPassword);
         [HttpPut("changePassword")]
         [Consumes("application/x-www-form-urlencoded")]
-        public IActionResult ChangePassword([FromForm] ChangePasswordForm form)
+        public async Task<IActionResult> ChangePassword([FromForm] ChangePasswordForm form)
         {
             if (string.IsNullOrWhiteSpace(form.currentPassword) || string.IsNullOrWhiteSpace(form.newPassword))
                 return BadRequest("Debe ingresar la contraseña actual y la nueva contraseña.");
@@ -149,7 +161,9 @@ namespace inmobiliariaApi.Controllers
             int id = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             if (id <= 0) return Unauthorized("Token inválido o expirado.");
 
-            var p = _repo.ObtenerPropietarioId(id);
+            //var p = _repo.ObtenerPropietarioId(id);
+            var p = await _context.propietario.FirstOrDefaultAsync(p => p.id == id); 
+
             if (p is null) return NotFound("Propietario no encontrado.");
 
             var salt = _config["Salt"] ?? "";
@@ -165,59 +179,13 @@ namespace inmobiliariaApi.Controllers
             if (!string.Equals(p.clave, actualHash, StringComparison.Ordinal))
                 return Unauthorized("La contraseña actual es incorrecta.");
 
-            var nuevoHash = Hash(form.newPassword.Trim());
-            _repo.ActualizarClave(id, nuevoHash);
+
+            p.clave = Hash(form.newPassword.Trim());
+            //_repo.ActualizarClave(id, nuevoHash);
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
-        [HttpPost("email")]
-        [AllowAnonymous]
-        public IActionResult EnviarEmailRecuperacion([FromForm] string email)
-        {
-            try
-            {
-                var propietario = _repo.ObtenerPorEmail(email);
-                if (propietario == null)
-                    return NotFound("No existe propietario con ese email.");
-
-                var otp = new Random().Next(100000, 999999).ToString();
-                var salt = _config["Salt"] ?? "";
-
-                string hashOtp = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                    password: otp,
-                    salt: Encoding.ASCII.GetBytes(salt),
-                    prf: KeyDerivationPrf.HMACSHA1,
-                    iterationCount: 1000,
-                    numBytesRequested: 256 / 8
-                ));
-
-                _repo.GuardarPassRestore(propietario.id, hashOtp);
-
-                var msg = new MimeKit.MimeMessage();
-                msg.To.Add(new MailboxAddress($"{propietario.nombre}", propietario.email));
-                msg.From.Add(new MailboxAddress("Soporte Inmobiliaria", _config["SMTPUser"]));
-                msg.Subject = "Restablecer contraseña";
-                msg.Body = new TextPart("html")
-                {
-                    Text = $"Hola {propietario.nombre}, tu código de recuperación es: {otp}"
-                };
-
-                using (var smtp = new SmtpClient())
-                {
-                    smtp.Connect("smtp.gmail.com", 465, true);
-                    smtp.Authenticate(_config["SMTPUser"], _config["SMTPPass"]);
-                    smtp.Send(msg);
-                    smtp.Disconnect(true);
-                }
-
-                return Ok("Se envió un correo con instrucciones para restablecer la contraseña.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
 
     }
 }

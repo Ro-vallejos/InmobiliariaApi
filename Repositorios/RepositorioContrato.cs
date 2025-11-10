@@ -2,14 +2,13 @@ using inmobiliariaApi.Models;
 using MySql.Data.MySqlClient;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
-using inmobiliariaApi.Dtos;
 
 namespace inmobiliariaApi.Repositorios;
 
 public class RepositorioContrato : RepositorioBase, IRepositorioContrato
 {
     public RepositorioContrato(IConfiguration configuration) : base(configuration) { }
-    public ContratoDto? ObtenerContratoVigentePorInmueble(int idInmueble)
+    public Contrato? ObtenerContratoVigentePorInmueble(int idInmueble)
     {
         using (MySqlConnection connection = new MySqlConnection(connectionString))
         {
@@ -35,7 +34,7 @@ public class RepositorioContrato : RepositorioBase, IRepositorioContrato
                 {
                     return null;
                 }
-                var contrato = new ContratoDto
+                var contrato = new Contrato
                 {
                     idContrato = reader.GetInt32("id"),
                     idInmueble = reader.GetInt32("id_inmueble"),
@@ -45,7 +44,7 @@ public class RepositorioContrato : RepositorioBase, IRepositorioContrato
                     estado = reader.GetInt32("estado"),
                     montoMensual = reader.GetDecimal("monto_mensual"),
 
-                    inquilino = new InquilinoDto
+                    inquilino = new Inquilino
                     {
                         idInquilino = reader.GetInt32("inq_id"),
                         nombre = reader.GetString("iinq_nombre"),
@@ -54,7 +53,7 @@ public class RepositorioContrato : RepositorioBase, IRepositorioContrato
                         email = reader.GetString("iinq_email"),
                         telefono = reader.GetString("iinq_telefono")
                     },
-                    inmueble = new InmuebleDto
+                    inmueble = new Inmueble
                     {
                         id = reader.GetInt32("inm_id"),
                         direccion = reader.GetString("inm_direccion"),

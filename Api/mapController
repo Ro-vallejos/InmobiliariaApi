@@ -1,0 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+[ApiController]
+[Route("")] // base vacío para que / y /ping cuelguen de raíz
+public class HealthController : ControllerBase
+{
+    [HttpGet("")]
+    [AllowAnonymous]
+    public IActionResult Root() => Ok("API OK");
+
+    [HttpGet("ping")]
+    [AllowAnonymous]
+    public IActionResult Ping() => Ok("pong");
+}

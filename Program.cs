@@ -2,7 +2,8 @@ using inmobiliariaApi.Repositorios;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-
+using Microsoft.EntityFrameworkCore;
+using inmobiliariaApi;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,14 @@ var configuration = builder.Configuration;
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddControllers();
+
+var cs = builder.Configuration.GetConnectionString("Mysql");
+builder.Services.AddDbContext<DataContext>(opt =>
+{
+	var serverVersion = ServerVersion.AutoDetect(cs);
+    opt.UseMySql(cs, serverVersion).UseSnakeCaseNamingConvention();
+});
+
 
 builder.Services.AddSession(options =>
 {
@@ -86,11 +95,16 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddTransient<IRepositorioInmueble, RepositorioInmueble>();
 builder.Services.AddTransient<IRepositorioPropietario, RepositorioPropietario>();
-builder.Services.AddTransient<IRepositorioPago, RepositorioPago>();
-builder.Services.AddTransient<IRepositorioContrato, RepositorioContrato>();
+//builder.Services.AddTransient<IRepositorioPago, RepositorioPago>();
+//builder.Services.AddTransient<IRepositorioContrato, RepositorioContrato>();
+
+builder.WebHost.UseUrls("http://0.0.0.0:5145");
 
 
 var app = builder.Build();
+app.MapGet("/", () => Results.Ok("API OK"));
+app.MapGet("/ping", () => "pong");
+
 
 
 
@@ -113,6 +127,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
+app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",

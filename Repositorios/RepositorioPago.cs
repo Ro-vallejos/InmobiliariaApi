@@ -2,7 +2,6 @@ using inmobiliariaApi.Models;
 using MySql.Data.MySqlClient;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
-using inmobiliariaApi.Dtos;
 
 namespace inmobiliariaApi.Repositorios;
 
@@ -10,9 +9,9 @@ public class RepositorioPago : RepositorioBase, IRepositorioPago
 {
     public RepositorioPago(IConfiguration configuration) : base(configuration) { }
 
-    public List<PagoDto> ObtenerPagosPorContrato(int contratoId)
+    public List<Pago> ObtenerPagosPorContrato(int contratoId)
     {
-        List<PagoDto> pagos = new List<PagoDto>();
+        List<Pago> pagos = new List<Pago>();
         using (MySqlConnection connection = new MySqlConnection(connectionString))
         {
             var sql = @"
@@ -44,20 +43,20 @@ public class RepositorioPago : RepositorioBase, IRepositorioPago
                         fechaPago = DateTime.Parse(fechaString);
                     }
 
-                    pagos.Add(new PagoDto
+                    pagos.Add(new Pago
                     {
                         idPago = reader.GetInt32(idxId),
                         idContrato = reader.GetInt32(idxIdContrato),
                         nroPago = reader.GetInt32(idxNroPago),
                         fechaPago = fechaPago,
                         importe = reader.GetDecimal(idxImporte),
-                        estado = reader.GetString(idxEstado) switch
-                        {
-                            "pendiente" => EstadoPago.pendiente.ToString(),
-                            "recibido" => EstadoPago.recibido.ToString(),
-                            "anulado" => EstadoPago.anulado.ToString(),
-                            _ => throw new ArgumentException("Estado de pago no reconocido")
-                        },
+                        // estado = reader.GetString(idxEstado) switch
+                        // {
+                        //     "pendiente" => EstadoPago.pendiente.ToString(),
+                        //     "recibido" => EstadoPago.recibido.ToString(),
+                        //     "anulado" => EstadoPago.anulado.ToString(),
+                        //     _ => throw new ArgumentException("Estado de pago no reconocido")
+                        // },
                         concepto = reader.GetString(idxConcepto)
                     });
                 }
